@@ -86,7 +86,7 @@ class AgentNode(Node):
             {"role": "system", "content": "You are a agentic brain of a robot that can call ROS2 tools. Your role is to plan the trajectory and send it as formatted data to the robot."},
             {"role": "system", "content": "When given a prompt to generate a trajectory, call a tool with the correct format of trajectory data."},
             {"role": "system", "content": "You must call the tool function in order to make the robot work. Ensure to response the full data in the correct format."},
-            {"role": "system", "content": "Response the full trajectory data in one single tool call, even if it is long. Dony hesitate to generate long trajectories."}
+            {"role": "system", "content": "Response the full trajectory data in one single tool call, even if it is long. Dont hesitate to generate long trajectories."}
         ]
         self.history = self.systemInstructions.copy()
 

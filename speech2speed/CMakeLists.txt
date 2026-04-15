@@ -30,6 +30,7 @@ install(PROGRAMS
   scripts/scheduler.py
   scripts/scheduler_temp.py
   scripts/agent.py
+  scripts/llm_node.py
   scripts/upsampler.py
   scripts/observer.py
   scripts/dataLogger.py

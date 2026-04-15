@@ -25,6 +25,11 @@ def generate_launch_description():
     	executable="agent.py"
     )
 
+    llm_node = Node(
+        package=package_name,
+        executable="llm_node.py"
+    )
+
     upsampler = Node(
     	package=package_name,
     	executable="upsampler.py"
@@ -51,6 +56,7 @@ def generate_launch_description():
     launch_description.add_action(traj_ind_launch_arg) 
     launch_description.add_action(duration_launch_arg)
     launch_description.add_action(agent)
+    launch_description.add_action(llm_node)
     launch_description.add_action(upsampler)
     launch_description.add_action(scheduler)
     launch_description.add_action(scheduler_temp)
