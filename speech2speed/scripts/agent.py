@@ -2,7 +2,8 @@
 
 import rclpy
 from rclpy.node import Node
-from langchain.agents import initialize_agent, AgentType
+#from langchain.agents import initialize_agent, AgentType
+from langchain.agents import create_agent # newer version of langchain
 from langchain.tools import tool
 
 from speech2speed_interface.srv import TwistTraj, String

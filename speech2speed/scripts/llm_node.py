@@ -2,7 +2,8 @@
 
 import rclpy
 from rclpy.node import Node
-from langchain.agents import initialize_agent, AgentType
+#from langchain.agents import initialize_agent, AgentType
+from langchain.agents import create_agent # newer version of langchain
 from langchain.tools import tool
 
 # Import your new message type alongside the standard ones
@@ -13,6 +14,7 @@ from std_msgs.msg import Float32
 
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 import os 
 import time
@@ -91,11 +93,27 @@ class LlmNode(Node):
         self.context_publisher = self.create_publisher(TrajContext, 'traj_context', 10)
 
         # Initialize LLM
+        '''
         api_key = os.environ.get("OPENAI_API_KEY", None)
         if api_key is None:
             self.get_logger().warning("OPENAI_API_KEY not set!")
             
         self.llm = ChatOpenAI(model="gpt-5-nano", api_key=api_key)
+        '''
+
+        # initialize Google Gemini LLM instead
+        # Initialize LLM
+        api_key = os.environ.get("GOOGLE_API_KEY", None)
+        if api_key is None:
+            self.get_logger().warning("GOOGLE_API_KEY not set!")
+            
+        # Using Gemini Flash for fast, tool-calling compatible inference
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash", 
+            google_api_key=api_key,
+            temperature=0.0 # Recommended 0 for deterministic robotics planning
+        )
+
 
         # Register the new tool
         self.publish_context_tool = make_publish_context_tool(self)
@@ -123,12 +141,22 @@ class LlmNode(Node):
             result = self.agent.invoke({"messages": self.history})
             assistant_text = None
 
+            # Update for Gemini multimodal response compatibility
             if isinstance(result, dict) and 'messages' in result:
                 try:
                     msgs = result['messages']
                     if msgs:
                         last = msgs[-1]
-                        assistant_text = getattr(last, "content", None) or last.get("content", None)
+                        raw_content = getattr(last, "content", None) or last.get("content", None)
+                        
+                        # --- THE FIX: Handle the Gemini multimodal list ---
+                        if isinstance(raw_content, list):
+                            # Extract text from the list block (e.g. [{'type': 'text', 'text': '...'}])
+                            assistant_text = str(raw_content[0].get('text', ''))
+                        else:
+                            # It's already a standard string
+                            assistant_text = str(raw_content) if raw_content is not None else None
+                        # --------------------------------------------------
                 except Exception:
                     assistant_text = None
 
@@ -153,7 +181,7 @@ class LlmNode(Node):
                 self.history = system_prompts + kept_non_system
 
             self.log_info(f"Thinking time: {(self.get_clock().now() - self.start_time).nanoseconds / 1e6} ms")
-            res.response = assistant_text
+            res.response = str(assistant_text)
             
         except Exception as e:
             self.get_logger().error(f"Agent error: {e}")
